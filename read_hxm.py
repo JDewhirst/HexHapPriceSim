@@ -146,8 +146,9 @@ def makeGraph(filename):
                         }
 
 
-    #the main body, x =1:18, y=1:18
-    for x_val in range(1,x_init-1):
+    ###the main body, x =1:18, y=1:18
+    ##odd columns
+    for x_val in range(1,x_init-1,2):
         for y_val in range(1,y_init-1):
             hexValue =  hexString(x_val,y_val)
             thisNode = {hexString(x_val-1,y_val):hexes[hexString(x_val-1,y_val)],
@@ -158,6 +159,21 @@ def makeGraph(filename):
                     hexString(x_val+1,y_val+1):hexes[hexString(x_val+1,y_val+1)]
                 }
             
+            graph[hexValue] = thisNode
+            
+    ##even columns
+    for x_val in range(2,x_init-1,2):
+        for y_val in range(1,y_init-1):
+            hexValue =  hexString(x_val,y_val)
+            #print(hexValue)
+            thisNode = {hexString(x_val-1,y_val-1):hexes[hexString(x_val-1,y_val-1)],
+                    hexString(x_val-1,y_val):hexes[hexString(x_val-1,y_val)],
+                    hexString(x_val,y_val-1):hexes[hexString(x_val,y_val-1)],
+                    hexString(x_val,y_val+1):hexes[hexString(x_val,y_val+1)],
+                    hexString(x_val+1,y_val-1):hexes[hexString(x_val+1,y_val-1)],
+                    hexString(x_val+1,y_val):hexes[hexString(x_val+1,y_val)]
+                }
+        
             graph[hexValue] = thisNode
             
     return(graph)
