@@ -7,5 +7,5 @@ read.hxm reads in from a .hxm file used by hexographer, creating a representatio
 
 Pathfinding.py contains an implementation of djikstras algorithm which is used to calculate the shortest distance between two markets.
 
-Provided with the distances between the markets and the relative abundance of resources at those markets local_price.py will calculate the price of goods at each markets.
+Provided with the distances between the markets and the relative abundance of resources at those markets local_price.py will calculate the price of goods at each market.
 
