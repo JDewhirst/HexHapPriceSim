@@ -18,11 +18,11 @@ paths = []
 distances = []
 
 for begin in range(len(markets)):
-    print('tic')
+    #print('tic')
     placeholder_distance = []
     placeholder_paths = []
     for end in range(len(markets)):
-        print('toc')
+        #print('toc')
         if begin == end:
             placeholder_distance.append(1)
             placeholder_paths.append(markets[begin])
