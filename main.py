@@ -10,7 +10,7 @@ import pathfinding
 import read_hxm
 import local_price
 
-graph = read_hxm.makeGraph("Antarctica 24 mi.hxm")#("testmap2.hxm")
+graph = read_hxm.makeGraph("testmap.hxm")#("testmap2.hxm")
 markets = ['00.01', '17.03', '43.11', '38.23', '05.13',
         '01.19', '13.19', '25.19'
     ]
