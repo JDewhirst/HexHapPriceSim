@@ -6,7 +6,9 @@ def hexString(X, Y):
     #return a string such that if x = 110 and y = 0, we get 110.00
     return f'{X:02d}'+'.'+f'{Y:02d}'
 
-#travel times of hexes
+#.hxm stores each hex as a line of tab seperated strings
+#first string is the name of the terrain
+#these are the travel times (in days) associated with each string
 travelTimes = {'Ocean':1/3,
             'Sea':2/3,
             'Deep Sea':1,
