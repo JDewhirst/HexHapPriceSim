@@ -3,11 +3,9 @@
 #The program picks the market. It takes in the 
 
 #print('This program calculates the prices of resources')
-
-
 import copy
 
-def prices(markets, marketDistances):
+def prices(markets, marketDistances, references):
     #calculates local value of gold
     def goldPrice(localReferences):
         #localValue= 1.2
@@ -52,13 +50,11 @@ def prices(markets, marketDistances):
         "pottery": "lb."
     }
 
-    distances = marketDistances#[[1, 3, 8, 7], [3, 1, 6, 4], [8, 6, 1, 10], [7, 4, 10, 1]]
-    #'00.01', '17.03', '43.11', '38.23', '05.13',
-    #    '01.19', '13.19', '25.19'
+    distances = marketDistances
     numMarkets = len(marketDistances)
-    referencesGold = [1,0,0,0,0,0.2,0,0]
-    referencesClay = [0,1,1,0,1,0,0.2,0]
-    referencesPottery = [0,0,0,1,1,0,0.2,0]
+    referencesGold = references[0]#[1,0,0]
+    referencesClay = references[1]#[0,1,1]
+    referencesPottery = references[2]#[0.1,0,0]
         
     globalGoldReferences = sum(referencesGold)
     globalGoldProduction = globalGoldReferences*1320 #1320 is 1 ref in oz.
