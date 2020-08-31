@@ -1,4 +1,4 @@
-# HexHapPriceSim
+# HexMapPriceSim
 Local Price Calculations on RPG Hex Map
 
 This set of scripts is takes in a stored hex map, produced in the software hexographer (https://www.hexographer.com/), the coordinates of 'markets' on that map, and the relative abundance of various goods (limited at the moment to gold, clay, and pottery), which it uses to calculate the price of those goods at each market.
