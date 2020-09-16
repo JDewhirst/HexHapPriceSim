@@ -37,7 +37,7 @@ for begin in range(len(markets)):
     distances.append(placeholder_distance)
     paths.append(placeholder_paths)
     
-references = [ [1,0,0], [0,1,1], [0.1,0,0]]
+references = [ [1,0,0], [0,1,1], [0.1,0,0] ]
 #references [ [gold], [clay], [pottery]]
 local_price.prices(markets, distances, references)#markets, distances, references
 

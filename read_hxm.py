@@ -1,11 +1,10 @@
 #this reads hexographer .hxm files to create a graph of the terrain
 #which I can then feed to a pathfinding algo
-#ths currently only works for maps up to 99,99 (100*100)
 
 def hexString(X, Y):
     #return a string such that if x = 110 and y = 0, we get 110.00
     return f'{X:02d}'+'.'+f'{Y:02d}'
-
+    
 #.hxm stores each hex as a line of tab seperated strings
 #first string is the name of the terrain
 #these are the travel times (in days) associated with each string
@@ -36,6 +35,10 @@ travelTimes = {'Ocean':1/3,
 
 def makeGraph(filename):
 
+    def addNode(X,Y, node):
+        node[hexString(X,Y)] = hexes[hexString(X,Y)]['time']
+        #print(node)
+
     inputFile = open(filename,"r", encoding='UTF-16')
     #find dimensions of the map
     firstLine = inputFile.readline().split(',')
@@ -51,7 +54,7 @@ def makeGraph(filename):
             hexes_not_found = False
     #print(line)
 
-    #initialise list of weights of hexes
+    #initialise dict of weights of hexes
     hexes = {}
 
     #empty graph
@@ -60,106 +63,136 @@ def makeGraph(filename):
     #store the value of each hex with its co-ords in XXYY format
     for x_val in range(x_init):
         for y_val in range(y_init):
-        #each hex with a feature adds a new line describing that feature
-        #any num of features will throw this off
+            #each hex with a feature adds a new line describing that feature
+            #any num of features will throw this off
             line = inputFile.readline().split('\t')
             #print(x_val,y_val,line[0])
             #hexValue = f'{x_val:02d}' + f'{y_val:02d}'
-            hexes[hexString(x_val,y_val)] = travelTimes[line[0]]
+            hexes[hexString(x_val,y_val)] = {'time':travelTimes[line[0]],'river':False}
+            
+    #check if rivers are present and update 'river' entry for applicable hexes
+    river = inputFile.readline().split('\t')
+    while river != ['']:
+        #.hxm stores each river on its own line
+        for i in range(7,len(river)):
+            x_val, y_val = river[i].split(',')
+            x_val, y_val = int(x_val.strip('0').strip('.')), int(y_val.strip('\n').strip('0').strip('.'))
+            x_coord = 1+ (x_val - 150)//225
+            if x_coord%2 == 0:
+                y_coord = (y_val)//300
+            else:
+                y_coord = 1 + (y_val - 150)//300
+            #check the travel time on this hex
+            #if it's > 1 subtract 1
+            # if it's 1, set to 1/2
+            hexes[hexString(x_coord, y_coord)]['river'] = True
+            
+        river = inputFile.readline().split('\t')
+    inputFile.close()
 
     ###construct a dict representing graph connections###
 
     #first hex is bespoke, only two connections
-    graph[hexString(0,0)] = {hexString(0,1):hexes[hexString(0,1)], hexString(1,0):hexes[hexString(1,0)]}
+    thisNode = {}
+    addNode(0,1,thisNode)
+    addNode(1,0,thisNode)
+    
+    graph[hexString(0,0)] = thisNode
+
     #first column x= 0, y = 1:19
     for y_val in range(1,y_init):
         hexValue = hexString(0,y_val)
-        thisNode = { hexString(0,y_val-1):hexes[hexString(0,y_val-1)],
-                hexString(1,y_val-1):hexes[hexString(1,y_val-1)],
-                hexString(1,y_val):hexes[hexString(1,y_val)]
-                }
+        thisNode = {}
+        addNode(0,y_val-1,thisNode)
+        addNode(1,y_val-1,thisNode)
+        addNode(1,y_val,thisNode)
+
         graph[hexValue] = thisNode
         
     #first row  x=1:18, y=0
     for x_val in range(1,x_init-1,2):
         hexValue = hexString(x_val,0)
-        thisNode = {hexString(x_val-1,0):hexes[hexString(x_val-1,0)],
-                    hexString(x_val-1,1):hexes[hexString(x_val-1,1)],
-                    hexString(x_val,1):hexes[hexString(x_val,1)],
-                    hexString(x_val+1,0):hexes[hexString(x_val+1,0)],
-                    hexString(x_val+1,1):hexes[hexString(x_val+1,1)]
-                }
+        thisNode = {}
+        addNode(x_val-1,0,thisNode)
+        addNode(x_val-1,1,thisNode)
+        addNode(x_val,1,thisNode)
+        addNode(x_val+1,0,thisNode)
+        addNode(x_val+1,1,thisNode)
         
         graph[hexValue] = thisNode
         
     #final hex of row
-    graph[hexString(x,0)] = {hexString(x-1,0):hexes[hexString(x-1,0)],
-                            hexString(x,1):hexes[hexString(x,1)]
-                        }
+    thisNode = {}
+    addNode(x-1,0,thisNode)
+    addNode(x,1,thisNode)
+    graph[hexString(x,0)] = thisNode
 
     for x_val in range(2,x_init-1,2):
         hexValue = hexString(x_val,0)
-        thisNode = {hexString(x_val-1,0):hexes[hexString(x_val-1,0)],
-                    hexString(x_val,1):hexes[hexString(x_val,1)],
-                    hexString(x_val+1,0):hexes[hexString(x_val+1,0)]
-                }
+        thisNode = {}
+        addNode(x_val-1,0,thisNode)
+        addNode(x_val,1,thisNode)
+        addNode(x_val+1,0,thisNode)
                 
         graph[hexValue] = thisNode
         
     #last column  x , y = 1:y-1
-    graph[hexString(x,y)] = {hexString(x-1,0):hexes[hexString(x-1,0)], 
-                                hexString(x-1,1):hexes[hexString(x-1,1)],
-                                hexString(x,1):hexes[hexString(x,1)],
-                                }
+    thisNode = {}
+    addNode(x-1,0,thisNode)
+    addNode(x-1,0,thisNode)
+    addNode(x-1,0,thisNode)
+    
+    graph[hexString(x,y)] = thisNode
+                                
     for y_val in range(1,y_init-1):
         hexValue = hexString(x,y_val)
-        thisNode = { hexString(x-1,y_val):hexes[hexString(x-1,y_val)],
-                    hexString(x-1,y_val-1):hexes[hexString(x-1,y_val-1)],
-                    hexString(x,y_val-1):hexes[hexString(x,y_val-1)]
-                }
+        thisNode = {}
+        addNode(x-1,y_val,thisNode)
+        addNode(x-1,y_val-1,thisNode)
+        addNode(x,y_val-1,thisNode)
                 
         graph[hexValue] = thisNode
         
     #last row xval=1:x-1, yval = y
     for x_val in range(1,x_init-1,2):
         hexValue = hexString(x_val,y)
-        thisNode = {hexString(x_val-1,y):hexes[hexString(x_val-1,y)],
-                    hexString(x_val,y-1):hexes[hexString(x_val,y-1)],
-                    hexString(x_val+1,y):hexes[hexString(x_val+1,y)]
-                }
+        thisNode = {}
+        addNode(x_val-1,y,thisNode)
+        addNode(x_val,y-1,thisNode)
+        addNode(x_val+1,y,thisNode)
                 
         graph[hexValue] = thisNode
         
     for x_val in range(2,x_init-1,2):
         hexValue = hexString(x_val,y)
-        thisNode = {hexString(x_val-1,y):hexes[hexString(x_val-1,y)],
-                    hexString(x_val-1,y-1):hexes[hexString(x_val-1,y-1)],
-                    hexString(x_val,y-1):hexes[hexString(x_val,y-1)],
-                    hexString(x_val+1,y-1):hexes[hexString(x_val+1,y-1)],
-                    hexString(x_val+1,y):hexes[hexString(x_val+1,y)]
-                }
+        thisNode = {}
+        addNode(x_val-1,y,thisNode)
+        addNode(x_val-1,y-1,thisNode)
+        addNode(x_val,y-1,thisNode)
+        addNode(x_val+1,y-1,thisNode)
+        addNode(x_val+1,y,thisNode)
                 
         graph[hexValue] = thisNode
 
     #last hex, max of x and y is bespoke
-    graph[hexString(x,y)] = {hexString(x-1,y-1):hexes[hexString(x-1,y-1)],
-                            hexString(x-1,y):hexes[hexString(x-1,y)],
-                            hexString(x,y-1):hexes[hexString(x,y-1)]
-                        }
-
+    thisNode = {}
+    addNode(x-1,y-1,thisNode)
+    addNode(x-1,y,thisNode)
+    addNode(x,y-1,thisNode)
+    
+    graph[hexString(x,y)] = thisNode
 
     ###the main body, x =1:18, y=1:18
     ##odd columns
     for x_val in range(1,x_init-1,2):
         for y_val in range(1,y_init-1):
             hexValue =  hexString(x_val,y_val)
-            thisNode = {hexString(x_val-1,y_val):hexes[hexString(x_val-1,y_val)],
-                    hexString(x_val-1,y_val+1):hexes[hexString(x_val-1,y_val+1)],
-                    hexString(x_val,y_val-1):hexes[hexString(x_val,y_val-1)],
-                    hexString(x_val,y_val+1):hexes[hexString(x_val,y_val+1)],
-                    hexString(x_val+1,y_val):hexes[hexString(x_val+1,y_val)],
-                    hexString(x_val+1,y_val+1):hexes[hexString(x_val+1,y_val+1)]
-                }
+            addNode(x_val-1,y_val,thisNode)
+            addNode(x_val-1,y_val+1,thisNode)
+            addNode(x_val,y_val-1,thisNode)
+            addNode(x_val,y_val+1,thisNode)
+            addNode(x_val+1,y_val,thisNode)
+            addNode(x_val+1,y_val+1,thisNode)
             
             graph[hexValue] = thisNode
             
@@ -168,16 +201,16 @@ def makeGraph(filename):
         for y_val in range(1,y_init-1):
             hexValue =  hexString(x_val,y_val)
             #print(hexValue)
-            thisNode = {hexString(x_val-1,y_val-1):hexes[hexString(x_val-1,y_val-1)],
-                    hexString(x_val-1,y_val):hexes[hexString(x_val-1,y_val)],
-                    hexString(x_val,y_val-1):hexes[hexString(x_val,y_val-1)],
-                    hexString(x_val,y_val+1):hexes[hexString(x_val,y_val+1)],
-                    hexString(x_val+1,y_val-1):hexes[hexString(x_val+1,y_val-1)],
-                    hexString(x_val+1,y_val):hexes[hexString(x_val+1,y_val)]
-                }
+            addNode(x_val-1,y_val-1,thisNode)
+            addNode(x_val-1,y_val,thisNode)
+            addNode(x_val,y_val-1,thisNode)
+            addNode(x_val,y_val+1,thisNode)
+            addNode(x_val+1,y_val-1,thisNode)
+            addNode(x_val+1,y_val,thisNode)
         
             graph[hexValue] = thisNode
             
+    
     return(graph)
 
 # graph = makeGraph("testmap.hxm")
