@@ -11,6 +11,7 @@ import read_hxm
 import local_price
 
 graph = read_hxm.makeGraph("testmap.hxm")#("testmap2.hxm")
+#print(graph)
 markets = ['00.01', '05.05', '08.08'
     ]
 paths = []
@@ -23,9 +24,9 @@ for begin in range(len(markets)):
         try:
             #if distance end->begin already calced, just sub it in
             #same for path
-            if distances[end][begin]:
-                placeholder_distance.append(distances[end][begin])
-                placeholder_paths.append(reverse(paths[end][being]))
+            if distances[begin][end]:
+                placeholder_distance.append(distances[begin][end])
+                placeholder_paths.append(reverse(paths[begin][end]))
         except:
              if begin == end:
                  placeholder_distance.append(1)
@@ -36,7 +37,7 @@ for begin in range(len(markets)):
             
     distances.append(placeholder_distance)
     paths.append(placeholder_paths)
-    
+
 references = [ [1,0,0], [0,1,1], [0.1,0,0] ]
 #references [ [gold], [clay], [pottery]]
 local_price.prices(markets, distances, references)#markets, distances, references

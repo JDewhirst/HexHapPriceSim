@@ -1,9 +1,5 @@
 #this reads hexographer .hxm files to create a graph of the terrain
 #which I can then feed to a pathfinding algo
-
-def hexString(X, Y):
-    #return a string such that if x = 110 and y = 0, we get 110.00
-    return f'{X:02d}'+'.'+f'{Y:02d}'
     
 #.hxm stores each hex as a line of tab seperated strings
 #first string is the name of the terrain
@@ -35,9 +31,17 @@ travelTimes = {'Ocean':1/3,
 
 def makeGraph(filename):
 
-    def addNode(X,Y, node):
-        node[hexString(X,Y)] = hexes[hexString(X,Y)]['time']
-        #print(node)
+    def hexString(X, Y):
+    #return a string such that if x = 110 and y = 0, we get 110.00
+        return f'{X:02d}'+'.'+f'{Y:02d}'
+
+    def addNode(target, thisHex, node):
+        if hexes[target]['river'] and hexes[thisHex]['river']:
+            node[target] = hexes[target]['time']/2
+        else:
+            node[target] = hexes[target]['time']
+        
+        #print(thisHex, node)
 
     inputFile = open(filename,"r", encoding='UTF-16')
     #find dimensions of the map
@@ -61,6 +65,7 @@ def makeGraph(filename):
     graph = {}
 
     #store the value of each hex with its co-ords in XXYY format
+    #hexes = { hex : {'time':travelTime, 'river': True/False} }
     for x_val in range(x_init):
         for y_val in range(y_init):
             #each hex with a feature adds a new line describing that feature
@@ -82,9 +87,6 @@ def makeGraph(filename):
                 y_coord = (y_val)//300
             else:
                 y_coord = 1 + (y_val - 150)//300
-            #check the travel time on this hex
-            #if it's > 1 subtract 1
-            # if it's 1, set to 1/2
             hexes[hexString(x_coord, y_coord)]['river'] = True
             
         river = inputFile.readline().split('\t')
@@ -94,18 +96,19 @@ def makeGraph(filename):
 
     #first hex is bespoke, only two connections
     thisNode = {}
-    addNode(0,1,thisNode)
-    addNode(1,0,thisNode)
+    hexValue = hexString(0,0)
+    addNode(hexString(0,1), hexValue, thisNode)
+    addNode(hexString(1,0), hexValue, thisNode)
     
-    graph[hexString(0,0)] = thisNode
+    graph[hexValue] = thisNode
 
     #first column x= 0, y = 1:19
     for y_val in range(1,y_init):
         hexValue = hexString(0,y_val)
         thisNode = {}
-        addNode(0,y_val-1,thisNode)
-        addNode(1,y_val-1,thisNode)
-        addNode(1,y_val,thisNode)
+        addNode(hexString(0,y_val-1), hexValue, thisNode)
+        addNode(hexString(1,y_val-1), hexValue, thisNode)
+        addNode(hexString(1,y_val), hexValue, thisNode)
 
         graph[hexValue] = thisNode
         
@@ -113,43 +116,43 @@ def makeGraph(filename):
     for x_val in range(1,x_init-1,2):
         hexValue = hexString(x_val,0)
         thisNode = {}
-        addNode(x_val-1,0,thisNode)
-        addNode(x_val-1,1,thisNode)
-        addNode(x_val,1,thisNode)
-        addNode(x_val+1,0,thisNode)
-        addNode(x_val+1,1,thisNode)
+        addNode(hexString(x_val-1,0), hexValue, thisNode)
+        addNode(hexString(x_val-1,1), hexValue, thisNode)
+        addNode(hexString(x_val,1), hexValue, thisNode)
+        addNode(hexString(x_val+1,0), hexValue, thisNode)
+        addNode(hexString(x_val+1,1), hexValue, thisNode)
         
         graph[hexValue] = thisNode
         
     #final hex of row
     thisNode = {}
-    addNode(x-1,0,thisNode)
-    addNode(x,1,thisNode)
-    graph[hexString(x,0)] = thisNode
+    hexValue = hexString(x,0)
+    addNode(hexString(x-1,0), hexValue, thisNode)
+    addNode(hexString(x,1), hexValue, thisNode)
+    graph[hexValue] = thisNode
 
     for x_val in range(2,x_init-1,2):
         hexValue = hexString(x_val,0)
         thisNode = {}
-        addNode(x_val-1,0,thisNode)
-        addNode(x_val,1,thisNode)
-        addNode(x_val+1,0,thisNode)
+        addNode(hexString(x_val-1,0), hexValue, thisNode)
+        addNode(hexString(x_val,1), hexValue, thisNode)
+        addNode(hexString(x_val+1,0), hexValue, thisNode)
                 
         graph[hexValue] = thisNode
         
     #last column  x , y = 1:y-1
     thisNode = {}
-    addNode(x-1,0,thisNode)
-    addNode(x-1,0,thisNode)
-    addNode(x-1,0,thisNode)
+    hexValue = hexString(x,y)
+    addNode(hexString(x-1,0), hexValue, thisNode)
     
-    graph[hexString(x,y)] = thisNode
+    graph[hexValue] = thisNode
                                 
     for y_val in range(1,y_init-1):
         hexValue = hexString(x,y_val)
         thisNode = {}
-        addNode(x-1,y_val,thisNode)
-        addNode(x-1,y_val-1,thisNode)
-        addNode(x,y_val-1,thisNode)
+        addNode(hexString(x-1,y_val), hexValue, thisNode)
+        addNode(hexString(x-1,y_val-1), hexValue, thisNode)
+        addNode(hexString(x,y_val-1), hexValue, thisNode)
                 
         graph[hexValue] = thisNode
         
@@ -157,42 +160,44 @@ def makeGraph(filename):
     for x_val in range(1,x_init-1,2):
         hexValue = hexString(x_val,y)
         thisNode = {}
-        addNode(x_val-1,y,thisNode)
-        addNode(x_val,y-1,thisNode)
-        addNode(x_val+1,y,thisNode)
+        addNode(hexString(x_val-1,y), hexValue, thisNode)
+        addNode(hexString(x_val,y-1), hexValue, thisNode)
+        addNode(hexString(x_val+1,y), hexValue, thisNode)
                 
         graph[hexValue] = thisNode
         
     for x_val in range(2,x_init-1,2):
         hexValue = hexString(x_val,y)
         thisNode = {}
-        addNode(x_val-1,y,thisNode)
-        addNode(x_val-1,y-1,thisNode)
-        addNode(x_val,y-1,thisNode)
-        addNode(x_val+1,y-1,thisNode)
-        addNode(x_val+1,y,thisNode)
+        addNode(hexString(x_val-1,y), hexValue, thisNode)
+        addNode(hexString(x_val-1,y-1), hexValue, thisNode)
+        addNode(hexString(x_val,y-1), hexValue, thisNode)
+        addNode(hexString(x_val+1,y-1), hexValue, thisNode)
+        addNode(hexString(x_val+1,y), hexValue, thisNode)
                 
         graph[hexValue] = thisNode
 
     #last hex, max of x and y is bespoke
     thisNode = {}
-    addNode(x-1,y-1,thisNode)
-    addNode(x-1,y,thisNode)
-    addNode(x,y-1,thisNode)
+    hexValue = hexString(x,y)
+    addNode(hexString(x-1,y-1), hexValue, thisNode)
+    addNode(hexString(x-1,y), hexValue, thisNode)
+    addNode(hexString(x,y-1), hexValue, thisNode)
     
-    graph[hexString(x,y)] = thisNode
+    graph[hexValue] = thisNode
 
     ###the main body, x =1:18, y=1:18
     ##odd columns
     for x_val in range(1,x_init-1,2):
         for y_val in range(1,y_init-1):
             hexValue =  hexString(x_val,y_val)
-            addNode(x_val-1,y_val,thisNode)
-            addNode(x_val-1,y_val+1,thisNode)
-            addNode(x_val,y_val-1,thisNode)
-            addNode(x_val,y_val+1,thisNode)
-            addNode(x_val+1,y_val,thisNode)
-            addNode(x_val+1,y_val+1,thisNode)
+            thisNode = {}
+            addNode(hexString(x_val-1,y_val), hexValue, thisNode)
+            addNode(hexString(x_val-1,y_val+1), hexValue, thisNode)
+            addNode(hexString(x_val,y_val-1), hexValue, thisNode)
+            addNode(hexString(x_val,y_val+1), hexValue, thisNode)
+            addNode(hexString(x_val+1,y_val), hexValue, thisNode)
+            addNode(hexString(x_val+1,y_val+1), hexValue, thisNode)
             
             graph[hexValue] = thisNode
             
@@ -201,12 +206,13 @@ def makeGraph(filename):
         for y_val in range(1,y_init-1):
             hexValue =  hexString(x_val,y_val)
             #print(hexValue)
-            addNode(x_val-1,y_val-1,thisNode)
-            addNode(x_val-1,y_val,thisNode)
-            addNode(x_val,y_val-1,thisNode)
-            addNode(x_val,y_val+1,thisNode)
-            addNode(x_val+1,y_val-1,thisNode)
-            addNode(x_val+1,y_val,thisNode)
+            thisNode = {}
+            addNode(hexString(x_val-1,y_val-1), hexValue, thisNode)
+            addNode(hexString(x_val-1,y_val), hexValue, thisNode)
+            addNode(hexString(x_val,y_val-1), hexValue, thisNode)
+            addNode(hexString(x_val,y_val+1), hexValue, thisNode)
+            addNode(hexString(x_val+1,y_val-1), hexValue, thisNode)
+            addNode(hexString(x_val+1,y_val), hexValue, thisNode)
         
             graph[hexValue] = thisNode
             
