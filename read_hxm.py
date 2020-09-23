@@ -38,6 +38,8 @@ def makeGraph(filename):
     def addNode(target, thisHex, node):
         if hexes[target]['river'] and hexes[thisHex]['river']:
             node[target] = hexes[target]['time']/2
+        elif not hexes[target]['river'] and hexes[thisHex]['river']:
+            node[target] = hexes[target]['time'] + 1
         else:
             node[target] = hexes[target]['time']
         
@@ -82,14 +84,16 @@ def makeGraph(filename):
         for i in range(7,len(river)):
             x_val, y_val = river[i].split(',')
             x_val, y_val = int(x_val.strip('0').strip('.')), int(y_val.strip('\n').strip('0').strip('.'))
-            x_coord = 1+ (x_val - 150)//225
+            x_coord = (x_val - 150)//225
             if x_coord%2 == 0:
                 y_coord = (y_val)//300
             else:
-                y_coord = 1 + (y_val - 150)//300
+                y_coord = (y_val - 150)//300
             hexes[hexString(x_coord, y_coord)]['river'] = True
             
         river = inputFile.readline().split('\t')
+        
+    #print(hexes)
     inputFile.close()
 
     ###construct a dict representing graph connections###
